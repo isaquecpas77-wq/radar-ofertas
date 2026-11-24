@@ -72,6 +72,5 @@ function runDemoScan(){saveSettings();let threshold=Number(document.querySelecto
 function pauseAll(){document.querySelector('#auto').checked=false;saveSettings();addEvent('⏸️','Automação pausada','Publicação automática desativada pelo administrador.','info');showToast('Automação desativada neste protótipo.')}
 function clearEvents(){events=[];localStorage.setItem('radar_events','[]');drawEvents();showToast('Histórico local limpo.')}
 load();renderProducts();
-async function requestBrowserPermission()
 </script></body></html>
 <!--Atualização do Radar -->
