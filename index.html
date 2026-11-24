@@ -92,7 +92,7 @@ async function loadApprovedProducts() {
     );
 
     if (!response.ok) {
-      throw new Error('Erro ao buscar ofertas');
+     throw new Error('Erro ao buscar ofertas: ' + response.status + ' - ' + await response.text());
     }
 
     const offers = await response.json();
