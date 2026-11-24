@@ -72,5 +72,131 @@ function runDemoScan(){saveSettings();let threshold=Number(document.querySelecto
 function pauseAll(){document.querySelector('#auto').checked=false;saveSettings();addEvent('⏸️','Automação pausada','Publicação automática desativada pelo administrador.','info');showToast('Automação desativada neste protótipo.')}
 function clearEvents(){events=[];localStorage.setItem('radar_events','[]');drawEvents();showToast('Histórico local limpo.')}
 load();renderProducts();
+
+async function loadApprovedProducts() {
+  const base = SUPABASE_URL.replace(/\/+$/, '');
+
+  const headers = {
+    apikey: SUPABASE_KEY,
+    Authorization: `Bearer ${SUPABASE_KEY}`
+  };
+
+  // Remove os produtos fictícios da vitrine
+  products.splice(0, products.length);
+  renderProducts();
+
+  try {
+    const response = await fetch(
+      `${base}/offers?select=id,product_id,price,reference_price,affiliate_url&status=eq.approved`,
+      { headers }
+    );
+
+    if (!response.ok) {
+      throw new Error('Erro ao buscar ofertas');
+    }
+
+    const offers = await response.json();
+
+    if (!offers.length) {
+      renderProducts();
+      showToast('Nenhuma oferta aprovada encontrada.');
+      return;
+    }
+
+    const ids = [...new Set(offers.map(o => o.product_id))];
+
+    const productResponse = await fetch(
+      `${base}/products?select=id,name,description,product_url,image_url&id=in.(${ids.join(',')})`,
+      { headers }
+    );
+
+    if (!productResponse.ok) {
+      throw new Error('Erro ao buscar produtos');
+    }
+
+    const productList = await productResponse.json();
+
+    offers.forEach(offer => {
+      const product = productList.find(
+        p => p.id === offer.product_id
+      );
+
+      if (!product) return;
+
+      products.push({
+        name: product.name,
+        cat: 'Oferta aprovada',
+        price: Number(offer.price).toLocaleString('pt-BR', {
+          style: 'currency',
+          currency: 'BRL'
+        }),
+        old: offer.reference_price
+          ? Number(offer.reference_price).toLocaleString('pt-BR', {
+              style: 'currency',
+              currency: 'BRL'
+            })
+          : '',
+        emoji: '🛍️',
+        desc: product.description || 'Oferta verificada.',
+        url: offer.affiliate_url || product.product_url
+      });
+    });
+
+    renderProducts();
+    showToast('Ofertas aprovadas carregadas do Supabase.');
+
+  } catch (error) {
+    console.error(error);
+    renderProducts();
+    showToast('Erro ao conectar com o Supabase.');
+  }
+}
+
+function escapeRadar(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  })[char]);
+}
+
+function renderProducts() {
+  const q = document.querySelector('#search').value.toLowerCase();
+
+  const arr = products.filter(p =>
+    (category === 'Todos' || category === 'Oferta aprovada') &&
+    (p.name + p.cat).toLowerCase().includes(q)
+  );
+
+  document.querySelector('#products').innerHTML = arr.map(p => {
+    const safeUrl = /^https?:\/\//i.test(p.url || '') ? p.url : '';
+
+    return `
+      <article class="product">
+        <div class="art">
+          ${p.emoji}
+          <span>APROVADO</span>
+        </div>
+        <div class="pbody">
+          <div class="cat">${escapeRadar(p.cat)}</div>
+          <h3>${escapeRadar(p.name)}</h3>
+          <p>${escapeRadar(p.desc)}</p>
+          <b class="price">${escapeRadar(p.price)}</b>
+          <span class="old">${escapeRadar(p.old)}</span>
+          <div class="state">Oferta aprovada</div>
+          ${
+            safeUrl
+              ? `<a class="buy" href="${escapeRadar(safeUrl)}" target="_blank" rel="noopener noreferrer">Ver produto →</a>`
+              : '<span class="state">Link de compra indisponível</span>'
+          }
+        </div>
+      </article>
+    `;
+  }).join('') || '<p>Nenhuma oferta aprovada encontrada.</p>';
+}
+
+loadApprovedProducts();
 </script></body></html>
 <!--Atualização do Radar -->
