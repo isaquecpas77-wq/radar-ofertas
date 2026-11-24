@@ -148,7 +148,7 @@ async function loadApprovedProducts() {
   } catch (error) {
     console.error(error);
     renderProducts();
-    showToast('Erro ao conectar com o Supabase.');
+    showToast(error.message);
   }
 }
 
