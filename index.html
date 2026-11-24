@@ -77,9 +77,8 @@ async function loadApprovedProducts() {
   const base = SUPABASE_URL.replace(/\/+$/, '');
 
   const headers = {
-    apikey: SUPABASE_KEY,
-    Authorization: `Bearer ${SUPABASE_KEY}`
-  };
+  apikey: SUPABASE_KEY
+};
 
   // Remove os produtos fictícios da vitrine
   products.splice(0, products.length);
