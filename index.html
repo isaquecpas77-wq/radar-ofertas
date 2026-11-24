@@ -111,7 +111,7 @@ async function loadApprovedProducts() {
     );
 
     if (!productResponse.ok) {
-      throw new Error('Erro ao buscar produtos');
+      throw new Error('Erro ao buscar produtos: ' + productResponse.status + ' - ' + await productResponse.text());
     }
 
     const productList = await productResponse.json();
